@@ -342,3 +342,19 @@ BASIC_DATA_COLUMNS = [
     "Supplier_product_code", "Item_classification", "Supplier_name",
     "Item_name_English", "Season", "Collection",
 ]
+
+
+# ================================================================
+# UNIFIED CSV (তিন app-এর সব column একটাই CSV-তে)
+# ================================================================
+CSV_FILENAME_TAG = "Data"   # file নাম: PEPCO_{season}_{skus}_{TAG} {supplier}_00_{style}.csv
+
+UNIFIED_COLUMNS = (
+    SS27_FINAL_COLUMNS                                             # SS27 (28)
+    + ["Pictogram", "Promotional", "Product_name",                 # Label V3 (21)
+       "Inner_kg", "Season_st", "Inner_qty", "Outer_qty"]
+    + [f"TC_Number_st{i + 1}" for i in range(V3_MAX_ITEMS)]
+    + [f"Barcode_st{i + 1}" for i in range(V3_MAX_ITEMS)]
+    + ["SKU_Name"]                                                 # Care (এখন পর্যন্ত)
+)
+# এখনো নেই: Size, Composition_Care (Care), Cotton (SS27) — পরে যোগ হবে
