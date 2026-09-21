@@ -1,5 +1,5 @@
 # ================================================================
-# PART 1 — PAGE CONFIG + IMPORTS + THEME + PASSWORD
+# PART 1 — PAGE CONFIG + IMPORTS
 # ================================================================
 
 # ---------- PAGE CONFIG (must be at top) ----------
@@ -15,17 +15,12 @@ import pandas as pd
 import re
 from io import StringIO
 import csv as pycsv
-import os
 import requests
 
 # ---------- Local modules (same folder) ----------
 from pdf_extractor import extract_data_from_pdf, extract_order_id_only
 from auto_fields import get_dept_value, clean_item_name_english
 from constants import WASHING_CODES, COLLECTION_MAPPING
-
-
-
-
 
 
 # ================================================================
@@ -785,37 +780,11 @@ def pepco_section():
 
 
 # ================================================================
-#  HEADER RENDER
-# ================================================================
-def render_header():
-    """Render logo or fallback icon."""
-    left, _ = st.columns([3, 10], vertical_alignment="center")
-    with left:
-        if os.path.exists(LOGO_SVG):
-            st.image(LOGO_SVG, width=300)
-        elif os.path.exists(LOGO_PNG):
-            st.image(LOGO_PNG, width=300)
-        else:
-            st.markdown(
-                "<div style='font-size:40px'>🏷️</div>",
-                unsafe_allow_html=True
-            )
-
-
-# ================================================================
 #  MAIN APP
 # ================================================================
 def main():
-    # Apply theme
-    st.markdown(THEME_CSS, unsafe_allow_html=True)
-
-    # Header + Title
-    render_header()
+    # Title
     st.title("PEPCO Automation App")
-
-    # Password gate
-    if not check_password():
-        st.stop()
 
     # Main content
     pepco_section()
