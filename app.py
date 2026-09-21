@@ -160,11 +160,8 @@ def process_pepco_pdf(uploaded_pdf, extra_order_ids: str | None = None):
     # ============================================================
     df['Dept'] = df['Item_classification'].apply(get_dept_value)
 
-    if cotton_value == "Z":
-        df['Cotton'] = cotton_value
-    else:
-        if 'Cotton' in df.columns:
-            df = df.drop(columns=['Cotton'])
+    # Cotton column shob somoy thakbe: 100% Cotton hole "Z", na hole khali
+    df['Cotton'] = cotton_value
 
     df['Collection'] = df.apply(
         lambda r: modify_collection(r['Collection'], r['Item_classification']),
