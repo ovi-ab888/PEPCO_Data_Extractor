@@ -5,8 +5,7 @@ core/pdf_utils.py
 
   read_pdf_pages            -> PDF → page-wise text
   extract_header_fields     -> Order ID, Style, Supplier, Season, Item name ...
-  extract_skus_and_barcodes -> SS27 + Care
-  extract_skus              -> Label V3 (barcode লাগে না)
+  (SKU / Barcode -> core/sku_barcode.py, Batch -> core/batch.py)
   extract_colour_from_pdf_pages
   extract_order_id_only / split_uploaded_pdfs / apply_extra_order_ids
 """
@@ -70,7 +69,7 @@ def extract_header_fields(pages_text):
     """
     তিনটা app-এ যেসব field একইভাবে বের হত:
       item_name_en, order_id, style_code (page1-এর প্রথম 6-digit),
-      item_class, supplier_code, supplier_name, season (SS27), season_yy (27)
+      item_class, supplier_code, supplier_name, season (SS27), season_yy (27), merch_code
     না পেলে "UNKNOWN" (item_name_en না পেলে "")।
     """
     page1 = pages_text[0]
@@ -88,6 +87,7 @@ def extract_header_fields(pages_text):
 
     style = re.search(r"\b\d{6}\b", page1)
     season = re.search(r"Season\s*\.{2,}\s*(\w+)?\s*(\d{2})", page1)
+    merch = re.search(r"Merch\s*code\s*\.{2,}\s*([\w/]+)", page1)
 
     return {
         "item_name_en": item_name_en,
@@ -98,55 +98,8 @@ def extract_header_fields(pages_text):
         "supplier_name": _first(r"Supplier name\s*\.{2,}\s*(.+)"),
         "season": f"{season.group(1) or ''}{season.group(2)}" if season else "UNKNOWN",
         "season_yy": season.group(2) if season else "",
+        "merch_code": merch.group(1).strip() if merch else "",
     }
-
-
-# ================================================================
-#  SKU + BARCODE
-# ================================================================
-def extract_skus_and_barcodes(pages_text):
-    """
-    8-digit SKU আর 13-digit barcode বের করে (SS27 + Care)।
-    "barcode: xxxxxxxxxxxxx" লেখা barcode গুলো বাদ যায়।
-    Return: (skus, barcodes) — না পেলে error দেখিয়ে (None, None)।
-    """
-    skus, barcodes, excluded = [], [], set()
-
-    for txt in pages_text:
-        skus.extend(re.findall(r"\b\d{8}\b", txt))
-        barcodes.extend(re.findall(r"\b\d{13}\b", txt))
-        excluded.update(re.findall(r"barcode:\s*(\d{13})", txt))
-
-    skus = dedupe(skus)
-    barcodes = dedupe(barcodes)
-    valid_barcodes = [b for b in barcodes if b not in excluded]
-
-    if not skus or not valid_barcodes:
-        st.error("SKU or Barcode missing.")
-        return None, None
-
-    if len(skus) != len(valid_barcodes):
-        min_len = min(len(skus), len(valid_barcodes))
-        st.warning(
-            f"SKU ({len(skus)}) and Barcode ({len(valid_barcodes)}) differ. Using first {min_len}."
-        )
-        skus = skus[:min_len]
-        valid_barcodes = valid_barcodes[:min_len]
-
-    return skus, valid_barcodes
-
-
-def extract_skus(pages_text):
-    """শুধু 8-digit SKU (Label V3)। না পেলে error দেখিয়ে None।"""
-    skus = []
-    for txt in pages_text:
-        skus.extend(re.findall(r"\b\d{8}\b", txt))
-    skus = dedupe(skus)
-
-    if not skus:
-        st.error("SKU missing from PDF.")
-        return None
-    return skus
 
 
 # ================================================================
