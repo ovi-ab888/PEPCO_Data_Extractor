@@ -172,7 +172,10 @@ def extract_outer_qty_from_page4_plus(pages_text):
 # ================================================================
 
 def extract_data_from_pdf(file):
-    """Main PDF extractor - only required fields."""
+    """
+    Main PDF extractor.
+    Multiple TC + Barcode = Multiple rows in CSV.
+    """
     try:
         raw = file.read()
         if not raw:
@@ -222,28 +225,29 @@ def extract_data_from_pdf(file):
             else:
                 promotional = PROMOTIONAL_MAPPING.get(value, "")
         
-        # Build results
-        row_data = {
-            "Pictogram": pictogram,
-            "Promotional": promotional,
-            "Product_name": product_name,
-            "Inner_kg": inner_kg,
-            "Season_st": season_st,
-            "Inner_qty": inner_qty,
-            "Outer_qty": outer_qty,
-        }
+        # ---------- Multiple rows logic ----------
+        # Pair TC and Barcode. Use the longer list length.
+        max_count = max(len(all_tc_numbers), len(all_barcodes), 1)
         
-        # Add TC numbers (st1 to st7)
-        for i in range(7):
-            col_name = f"TC_Number_st{i+1}"
-            row_data[col_name] = all_tc_numbers[i] if i < len(all_tc_numbers) else ""
+        results = []
+        for i in range(max_count):
+            tc_value = all_tc_numbers[i] if i < len(all_tc_numbers) else ""
+            barcode_value = all_barcodes[i] if i < len(all_barcodes) else ""
+            
+            row_data = {
+                "Pictogram": pictogram,
+                "Promotional": promotional,
+                "Product_name_st": product_name,
+                "Inner_kg": inner_kg,
+                "Season_st": season_st,
+                "Inner_qty": inner_qty,
+                "Outer_qty": outer_qty,
+                "TC_Number_st": tc_value,
+                "Barcode_st": barcode_value,
+            }
+            results.append(row_data)
         
-        # Add Barcodes (st1 to st7)
-        for i in range(7):
-            col_name = f"Barcode_st{i+1}"
-            row_data[col_name] = all_barcodes[i] if i < len(all_barcodes) else ""
-        
-        return [row_data]
+        return results
     
     except Exception as e:
         st.error(f"PDF error: {str(e)}")
@@ -266,35 +270,25 @@ def process_pepco_pdf(uploaded_pdf):
     
     df = pd.DataFrame(result_data)
     
-    # Final columns (only kept fields)
+    # Final columns (new names + single TC & Barcode columns)
     final_cols = [
         "Pictogram",
         "Promotional",
-        "Product_name",
+        "Product_name_st",
         "Inner_kg",
         "Season_st",
         "Inner_qty",
-        "Outer_qty"
+        "Outer_qty",
+        "TC_Number_st",
+        "Barcode_st"
     ]
-    
-    # Add TC Number columns
-    tc_cols = [f"TC_Number_st{i+1}" for i in range(7)]
-    for col in tc_cols:
-        if col in df.columns:
-            final_cols.append(col)
-    
-    # Add Barcode columns
-    barcode_cols = [f"Barcode_st{i+1}" for i in range(7)]
-    for col in barcode_cols:
-        if col in df.columns:
-            final_cols.append(col)
     
     # Ensure all columns exist
     for col in final_cols:
         if col not in df.columns:
             df[col] = ""
     
-    st.success("✅ Done!")
+    st.success(f"✅ Done! Total rows: {len(df)}")
     st.subheader("Edit Before Download")
     
     edited_df = st.data_editor(df[final_cols])
@@ -307,8 +301,8 @@ def process_pepco_pdf(uploaded_pdf):
     for row in edited_df.itertuples(index=False):
         writer.writerow(row)
     
-    # Simple filename
-    custom_filename = f"PEPCO_Extracted_{datetime.today().strftime('%Y%m%d_%H%M%S')}.csv"
+    # CSV filename
+    custom_filename = "PEPCO_Data.csv"
     
     st.download_button(
         "📥 Download CSV",
