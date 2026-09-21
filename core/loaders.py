@@ -1,11 +1,10 @@
 """
 core/loaders.py
 ===============
-Google Sheet loader (10 মিনিট cache)। Price ladder-এর loader core/price.py-তে।
+Google Sheet loader (10 মিনিট cache)।
+Price ladder-এর loader -> core/price.py, Product translation-এর loader -> core/product_name.py
 URL / gid / fallback data সব core/config.py থেকে আসে।
 """
-from urllib.parse import quote
-
 import pandas as pd
 import streamlit as st
 
@@ -14,36 +13,10 @@ from core.config import (
     MATERIAL_TRANSLATION_SHEET_URL,
     MATERIAL_TRANSLATION_LANGS,
     MATERIAL_TRANSLATION_FALLBACK,
-    PRODUCT_TRANSLATION_SHEET_ID,
-    PRODUCT_TRANSLATION_SHEET_NAME,
     CARE_SHEET_BASE_URL,
     CARE_SHEET_GIDS,
     COMPONENT_TRANSLATION_FALLBACK,
 )
-
-
-# ================================================================
-#  PRODUCT NAME TRANSLATIONS (SS27)
-# ================================================================
-@st.cache_data(ttl=CACHE_TTL)
-def load_product_translations():
-    """Product name translations DataFrame. Fail করলে empty DataFrame।"""
-    try:
-        sheet_name = quote(PRODUCT_TRANSLATION_SHEET_NAME)
-        url = (
-            f"https://docs.google.com/spreadsheets/d/{PRODUCT_TRANSLATION_SHEET_ID}"
-            f"/gviz/tq?tqx=out:csv&sheet={sheet_name}"
-        )
-        df = pd.read_csv(url)
-
-        if df.empty:
-            st.error("Loaded translations but sheet appears empty")
-
-        return df
-
-    except Exception as e:
-        st.error(f"❌ Failed to load translations: {str(e)}")
-        return pd.DataFrame()
 
 
 # ================================================================
