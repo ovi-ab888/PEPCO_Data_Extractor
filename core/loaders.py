@@ -1,7 +1,7 @@
 """
 core/loaders.py
 ===============
-সব Google Sheet loader এক জায়গায় (10 মিনিট cache)।
+Google Sheet loader (10 মিনিট cache)। Price ladder-এর loader core/price.py-তে।
 URL / gid / fallback data সব core/config.py থেকে আসে।
 """
 from urllib.parse import quote
@@ -11,7 +11,6 @@ import streamlit as st
 
 from core.config import (
     CACHE_TTL,
-    PRICE_SHEET_URL,
     MATERIAL_TRANSLATION_SHEET_URL,
     MATERIAL_TRANSLATION_LANGS,
     MATERIAL_TRANSLATION_FALLBACK,
@@ -21,26 +20,6 @@ from core.config import (
     CARE_SHEET_GIDS,
     COMPONENT_TRANSLATION_FALLBACK,
 )
-
-
-# ================================================================
-#  PRICE LADDER (SS27)
-# ================================================================
-@st.cache_data(ttl=CACHE_TTL)
-def load_price_data():
-    """Currency price ladder → {currency: [values]}. Fail করলে None।"""
-    try:
-        df = pd.read_csv(PRICE_SHEET_URL)
-
-        if df.empty:
-            st.error("Price data sheet is empty")
-            return None
-
-        return {cur: df[cur].dropna().tolist() for cur in df.columns}
-
-    except Exception as e:
-        st.error(f"Failed to load price data: {str(e)}")
-        return None
 
 
 # ================================================================
