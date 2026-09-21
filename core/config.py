@@ -339,4 +339,5 @@ Uvoznik za Srbiju: Pepco d.o.o., Pariske komune 22, 11070 Beograd-Novi Beograd. 
 BASIC_DATA_COLUMNS = [
     "Order_ID", "Style", "Colour",
     "Supplier_product_code", "Item_classification", "Supplier_name",
+    "Item_name_English", "Season", "Collection",
 ]
