@@ -17,7 +17,8 @@ FINAL_COLS = [
     "Collection", "Colour_SKU", "Style_Merch_Season",
     "Batch", "barcode", "washing_code", "EUR", "BGN",
     "BAM", "PLN", "RON", "CZK", "UAH", "MKD", "RSD", "HUF",
-    "product_name", "Dept", "Item_name_English", "Season", "Sizes"
+    "product_name", "Dept", "Item_name_English", "Season", "Sizes",
+    "Cotton"   # 100% Cotton hole "Z", na hole khali (column shob somoy thake)
 ]
 
 
@@ -66,10 +67,6 @@ def build_csv_filename(df):
 # ================================================================
 def render_editor_and_download(df):
     final_cols = list(FINAL_COLS)
-
-    # Optionally include Cotton column
-    if 'Cotton' in df.columns and 'Cotton' not in final_cols:
-        final_cols.append("Cotton")
 
     # Ensure all columns exist
     for col in final_cols:
