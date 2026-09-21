@@ -101,7 +101,7 @@ V3_BASE_COLUMNS = [
     "Item_name_English", "Season", "Pictogram", "Promotional",
     "Product_name", "Inner_kg", "Season_st", "Inner_qty", "Outer_qty",
 ]
-# এর পরে TC_Number_st1..st7 আর Barcode_st1..st7 code দিয়ে generate হবে (V3_MAX_ITEMS)
+# এর পরে TC_Number_st1..st7 আর Barcode_st1..st7 — core/inner_outer.py-র tc_barcode_columns() দেয় (V3_MAX_ITEMS)
 
 
 # ================================================================
