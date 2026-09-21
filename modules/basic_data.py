@@ -1,19 +1,25 @@
 """
 modules/basic_data.py
 =====================
-Basic Data mode — PDF থেকে শুধু ৬টা field:
-  Order_ID, Style, Colour, Supplier_product_code, Item_classification, Supplier_name
+Basic Data mode — PDF থেকে শুধু ৯টা field:
+  Order_ID, Style, Colour, Supplier_product_code, Item_classification, Supplier_name,
+  Item_name_English, Season, Collection
 
 Logic app 1 (SS27) থেকে নেওয়া:
   - Order_ID / Style / Supplier / Item_classification -> page 1
   - Style  = page 1-এর প্রথম 6-digit সংখ্যা
   - Colour = auto detect, না পেলে manual input; Title Case (WHITE -> White)
+  - Item_name_English = Item name থেকে শুরুর number/prefix বাদ, CAPITAL
+  - Season = যেমন SS27
+  - Collection = PDF থেকে নাম -> COLLECTION_MAPPING -> Boys হলে " B", Girls হলে " G";
+                 না পেলে manual input
   - একাধিক PDF দিলে বাকি PDF-এর Order ID "+" দিয়ে জোড়া লাগে
 """
 import pandas as pd
 import streamlit as st
 
-from core.config import BASIC_DATA_COLUMNS
+from core.collection import extract_collection, modify_collection
+from core.config import BASIC_DATA_COLUMNS, ITEM_NAME_PREFIXES_SS27
 from core.export import build_csv_bytes
 from core.pdf_utils import (
     read_pdf_pages,
@@ -22,6 +28,7 @@ from core.pdf_utils import (
     split_uploaded_pdfs,
     apply_extra_order_ids,
 )
+from core.text_utils import clean_item_name_english
 
 # session_state key prefix — reset-এ "basic_ui_" দিয়ে শুরু হওয়া সব মুছে যায়
 _UI = "basic_ui_"
@@ -29,17 +36,26 @@ _UPLOADER_COUNTER = "basic_uploader_n"
 
 
 def extract_basic_data(pages_text):
-    """pages_text → (৬-field dict, season)।"""
+    """pages_text → (৯-field dict, season)।"""
     h = extract_header_fields(pages_text)
     colour = extract_colour_from_pdf_pages(pages_text, manual_key=f"{_UI}manual_colour")
+
+    item_class = h["item_class"]
+    collection = modify_collection(
+        extract_collection(pages_text, item_class, manual_key=f"{_UI}manual_collection"),
+        item_class,
+    )
 
     row = {
         "Order_ID": h["order_id"],
         "Style": h["style_code"],
         "Colour": colour.title(),
         "Supplier_product_code": h["supplier_code"],
-        "Item_classification": h["item_class"],
+        "Item_classification": item_class,
         "Supplier_name": h["supplier_name"],
+        "Item_name_English": clean_item_name_english(h["item_name_en"], ITEM_NAME_PREFIXES_SS27),
+        "Season": h["season"],
+        "Collection": collection,
     }
     return row, h["season"]
 
