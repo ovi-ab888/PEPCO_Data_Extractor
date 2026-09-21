@@ -4,7 +4,8 @@ core/price.py
 Price-এর সব function ও logic এক জায়গায় (SS27 / app 1 থেকে)।
 
 Flow:
-  PDF   -> extract_pl_sales_price_from_pdf()  PLN price (text)
+  PDF   -> extract_pl_sales_price_from_pdf()  PLN price (text) — line-ভিত্তিক, ২ decimal
+        -> detect_pl_sales_price()            PLN price (text) — পুরোনো, পুরো text-এ regex
   UI    -> parse_pln_price()                  text -> float
   Sheet -> load_price_data()                  price ladder (Google Sheet)
         -> find_closest_price()               PLN-এর সাথে মিলিয়ে বাকি currency-র দাম
@@ -74,6 +75,21 @@ def extract_pl_sales_price_from_pdf(pages_text):
                     if prices:
                         return prices[0].replace(",", ".")
     return ""
+
+
+def detect_pl_sales_price(full_text):
+    """
+    পুরোনো detector: পুরো PDF text-এ "PL" এর পরের প্রথম দাম ("12.50")। না পেলে None।
+    (app 1-এ এটা call হত না — extract_pl_sales_price_from_pdf বেশি নির্ভরযোগ্য।
+     এটা "PL 1.5"-এর মতো যেকোনো decimal ধরে, তাই fallback হিসেবে ব্যবহার করলে দেখে নেবেন।)
+    """
+    try:
+        m = re.search(r"PL\s+[^\n]*?(\d+[\.,]\d+)", full_text)
+        if m:
+            return m.group(1).replace(',', '.')
+    except Exception:
+        pass
+    return None
 
 
 # ================================================================
