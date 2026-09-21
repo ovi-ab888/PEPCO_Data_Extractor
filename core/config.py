@@ -65,6 +65,7 @@ CARE_SHEET_GIDS = {
 # PDF EXTRACTION SETTINGS
 # ================================================================
 BATCH_OFFSET_DAYS = 20       # SS27: Batch = Handover date - 20 days
+BATCH_LABEL_PREFIX = "виготовлення: "   # label-এ Batch-এর আগে যে লেখা বসে
 V3_START_PAGE_INDEX = 3      # Label V3: page 4 থেকে শুরু (0-based index)
 V3_MAX_ITEMS = 7             # Label V3: max TC / Barcode (st1..st7)
 
