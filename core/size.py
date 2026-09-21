@@ -5,6 +5,7 @@ Size-এর সব function ও logic (SS27 / app 1 থেকে)।
 
   extract_sizes_from_pdf()  PDF-এর "Sizes" অংশ থেকে সব size -> "S, M, L"
   split_sizes()             "S, M, L" -> ["S", "M", "L"]
+  pair_sizes()              size list-কে SKU-র সংখ্যার সমান করে (কম হলে "" দিয়ে পূরণ)
 """
 import re
 
@@ -64,3 +65,13 @@ def split_sizes(sizes):
     ফাঁকা / None হলে [""] (app 1-এর মতো, যাতে zip-এ কাজ করে)।
     """
     return [s.strip() for s in sizes.split(",")] if sizes else [""]
+
+
+def pair_sizes(sizes_list, count):
+    """
+    size list-কে ঠিক `count` টা করে ফেরত দেয় (count = SKU/barcode জোড়ার সংখ্যা)।
+      size কম থাকলে বাকিগুলো ""  -> কোনো SKU বাদ পড়ে না
+      size বেশি থাকলে           -> প্রথম `count` টা
+    (app 1-এ zip() ব্যবহার হত, তাতে size কম হলে row-ও কমে যেত)
+    """
+    return (list(sizes_list) + [""] * count)[:count]
