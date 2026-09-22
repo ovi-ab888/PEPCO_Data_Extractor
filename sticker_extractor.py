@@ -182,25 +182,15 @@ def extract_sticker_data(pages_text):
 
 
 # ================================================================
-#  Ekta list theke N-th row-er value ber kora.
-#  - list-e 1-ta item thakle -> shob row-e shei ekta-i (repeat)
-#  - list-e 1-er beshi thakle -> N-th row-e N-th item (na thakle khali)
-#  - list khali thakle -> shob row-e khali
-# ================================================================
-def _pick(values, idx):
-    if len(values) == 1:
-        return values[0]
-    if idx < len(values):
-        return values[idx]
-    return ""
-
-
-# ================================================================
 #  N-th row er jonno 9-ta sticker column er value
-#  TC_Number_st / Barcode_st: PDF-e 1-ta thakle shob row-e shei ekta-i
-#  boshbe; joto size totota TC/Barcode thakle N-th row-e N-th ta boshbe.
+#  TC_Number_st / Barcode_st: N-th row te N-th item (na thakle khali).
+#  Repeat kora hoy na - PDF-e joto-ta TC/Barcode thake, totogulo row-e-i
+#  boshe, baki row khali thake.
 # ================================================================
 def sticker_values_for_row(sticker, idx):
+    tcs = sticker["tc_numbers"]
+    bcs = sticker["barcodes"]
+
     return {
         "Pictogram": sticker["pictogram"],
         "Promotional": sticker["promotional"],
@@ -209,6 +199,6 @@ def sticker_values_for_row(sticker, idx):
         "Season_st": sticker["season_st"],
         "Inner_qty": sticker["inner_qty"],
         "Outer_qty": sticker["outer_qty"],
-        "TC_Number_st": _pick(sticker["tc_numbers"], idx),
-        "Barcode_st": _pick(sticker["barcodes"], idx),
+        "TC_Number_st": tcs[idx] if idx < len(tcs) else "",
+        "Barcode_st": bcs[idx] if idx < len(bcs) else "",
     }
