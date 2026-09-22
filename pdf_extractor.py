@@ -15,6 +15,7 @@ from auto_fields import (
     make_style_merch_season,
     make_batch,
 )
+from sticker_extractor import extract_sticker_data, sticker_values_for_row
 
 
 # ================================================================
@@ -216,6 +217,9 @@ def extract_data_from_pdf(file):
         full_text = "\n".join(pages_text)
         page1 = pages_text[0]
 
+        # ---------------- STICKER DATA (sticker_extractor.py) ----------------
+        sticker = extract_sticker_data(pages_text)
+
         # ---------------- Item Name EN ----------------
         item_name_en = None
 
@@ -332,7 +336,7 @@ def extract_data_from_pdf(file):
         sizes_list = [s.strip() for s in sizes.split(",")] if sizes else [""]
 
         # SKU + Barcode + Size ekshathe jora (zip = shobcheye chhoto list porjonto)
-        for sku, barcode, size in zip(skus, valid_barcodes, sizes_list):
+        for i, (sku, barcode, size) in enumerate(zip(skus, valid_barcodes, sizes_list)):
             results.append({
                 "Order_ID": order_id.group(1).strip() if order_id else "UNKNOWN",
                 "Style": style_code.group() if style_code else "UNKNOWN",
@@ -351,6 +355,7 @@ def extract_data_from_pdf(file):
                 "Item_name_EN": item_name_en or "",
                 "Season": season_value,
                 "Sizes": size,
+                **sticker_values_for_row(sticker, i),   # 9-ta sticker column
             })
 
         return results, pl_price_detected
