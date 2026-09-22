@@ -18,7 +18,10 @@ FINAL_COLS = [
     "Batch", "barcode", "washing_code", "EUR", "BGN",
     "BAM", "PLN", "RON", "CZK", "UAH", "MKD", "RSD", "HUF",
     "product_name", "Dept", "Item_name_English", "Season", "Sizes",
-    "Cotton"   # 100% Cotton hole "Z", na hole khali (column shob somoy thake)
+    "Cotton",  # 100% Cotton hole "Z", na hole khali (column shob somoy thake)
+    # ---- Sticker columns (sticker_extractor.py) ----
+    "Pictogram", "Promotional", "Product_name_st", "Inner_kg", "Season_st",
+    "Inner_qty", "Outer_qty", "TC_Number_st", "Barcode_st"
 ]
 
 
