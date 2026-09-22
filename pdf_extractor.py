@@ -14,8 +14,10 @@ from auto_fields import (
     make_colour_sku,
     make_style_merch_season,
     make_batch,
+    get_dept_value,
 )
 from sticker_extractor import extract_sticker_data, sticker_values_for_row
+from cm_size import get_cm_size
 
 
 # ================================================================
@@ -355,6 +357,9 @@ def extract_data_from_pdf(file):
                 "Item_name_EN": item_name_en or "",
                 "Season": season_value,
                 "Sizes": size,
+                "cm_size": get_cm_size(
+                    get_dept_value(item_class_value), size, item_name_en or ""
+                ),
                 **sticker_values_for_row(sticker, i),   # 9-ta sticker column
             })
 
