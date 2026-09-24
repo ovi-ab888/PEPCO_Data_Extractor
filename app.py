@@ -161,26 +161,29 @@ def process_pepco():
             top1, top2 = st.columns([5, 1])
             with top1:
                 if use_advanced_mode:
-                    # Component Name (Required)
-                    current_name = block.get("component_name", "Main fabric")
-                    name_index = component_options.index(current_name) if current_name in component_options else 0
-                    block["component_name"] = st.selectbox(
-                        f"Component Name #{block_idx + 1}",
-                        options=component_options,
-                        index=name_index,
-                        key=f"comp_name_{block_idx}"
-                    )
+                    # ===== Component Name + Optional Component Name (Same Line) =====
+                    col_name1, col_name2 = st.columns(2)
                     
-                    # Optional Component Name
-                    optional_options = [""] + component_options
-                    current_optional = block.get("component_name_optional", "")
-                    optional_index = optional_options.index(current_optional) if current_optional in optional_options else 0
-                    block["component_name_optional"] = st.selectbox(
-                        f"Optional Component Name #{block_idx + 1} (optional)",
-                        options=optional_options,
-                        index=optional_index,
-                        key=f"comp_name_optional_{block_idx}"
-                    )
+                    with col_name1:
+                        current_name = block.get("component_name", "Main fabric")
+                        name_index = component_options.index(current_name) if current_name in component_options else 0
+                        block["component_name"] = st.selectbox(
+                            f"Component Name #{block_idx + 1}",
+                            options=component_options,
+                            index=name_index,
+                            key=f"comp_name_{block_idx}"
+                        )
+                    
+                    with col_name2:
+                        optional_options = [""] + component_options
+                        current_optional = block.get("component_name_optional", "")
+                        optional_index = optional_options.index(current_optional) if current_optional in optional_options else 0
+                        block["component_name_optional"] = st.selectbox(
+                            f"Optional Component Name #{block_idx + 1}",
+                            options=optional_options,
+                            index=optional_index,
+                            key=f"comp_name_optional_{block_idx}"
+                        )
                 else:
                     st.markdown("#### Simple Composition")
             with top2:
