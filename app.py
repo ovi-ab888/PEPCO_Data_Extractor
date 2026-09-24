@@ -26,6 +26,16 @@ WASHING_CODES = {
 }
 
 
+def to_sentence_case(text: str) -> str:
+    """Convert any text to Sentence Case"""
+    if not text or not isinstance(text, str):
+        return text
+    text = text.strip()
+    if not text:
+        return text
+    return text[0].upper() + text[1:].lower() if len(text) > 1 else text.upper()
+
+
 # ================================================================
 #  DATA LOADERS
 # ================================================================
@@ -112,36 +122,31 @@ def process_pepco():
     
     def get_material_all_languages(mat_name, pct):
         if materials_df.empty or not mat_name:
-            return f"{pct}% {mat_name}"
+            return f"{pct}% {to_sentence_case(mat_name)}"
         en_col = materials_df.columns[0]
         row = materials_df[materials_df[en_col].astype(str).str.strip() == mat_name]
         if row.empty:
-            return f"{pct}% {mat_name}"
-        translations = [mat_name]
+            return f"{pct}% {to_sentence_case(mat_name)}"
+        translations = [to_sentence_case(mat_name)]
         for col in materials_df.columns:
             val = row.iloc[0].get(col, "")
             if pd.notna(val) and str(val).strip() and val != mat_name:
                 text = str(val).strip()
-                if text:
-                    text = text[0].upper() + text[1:] if len(text) > 1 else text.upper()
-                translations.append(text)
+                translations.append(to_sentence_case(text))
         return f"{pct}% {'/ '.join(translations)}"
     
     def get_component_name_translations(comp_name):
         if not comp_name or comp_translations_df.empty:
-            return comp_name
+            return to_sentence_case(comp_name) if comp_name else comp_name
         row = comp_translations_df[comp_translations_df['EN'].astype(str).str.strip() == comp_name]
         if row.empty:
-            return comp_name
-        translations = [comp_name]
+            return to_sentence_case(comp_name)
+        translations = [to_sentence_case(comp_name)]
         for col in comp_translations_df.columns:
             if col != 'EN':
                 val = row.iloc[0].get(col, "")
                 if pd.notna(val) and str(val).strip():
-                    text = str(val).strip()
-                    if text:
-                        text = text[0].upper() + text[1:] if len(text) > 1 else text.upper()
-                    translations.append(text)
+                    translations.append(to_sentence_case(str(val).strip()))
         return "/ ".join(translations)
     
     def build_material_line(materials):
@@ -149,8 +154,6 @@ def process_pepco():
         for m in materials:
             if m["mat"] and m["pct"] > 0:
                 mat_text = get_material_all_languages(m["mat"], m["pct"])
-                if mat_text:
-                    mat_text = mat_text[0].upper() + mat_text[1:] if len(mat_text) > 1 else mat_text.upper()
                 parts.append(mat_text)
         return "\n\n".join(parts)
     
@@ -161,7 +164,7 @@ def process_pepco():
             top1, top2 = st.columns([5, 1])
             with top1:
                 if use_advanced_mode:
-                    # ===== Component Name + Optional Component Name (Same Line) =====
+                    # Component Name + Optional Component Name (Same Line)
                     col_name1, col_name2 = st.columns(2)
                     
                     with col_name1:
@@ -317,15 +320,12 @@ def process_pepco():
         en_col = care_instructions_df.columns[0]
         row = care_instructions_df[care_instructions_df[en_col].astype(str).str.strip() == inst_text]
         if row.empty:
-            return ""
+            return to_sentence_case(inst_text)
         translations = []
         for col in care_instructions_df.columns:
             val = row.iloc[0].get(col, "")
             if pd.notna(val) and str(val).strip():
-                text = str(val).strip()
-                if text:
-                    text = text[0].upper() + text[1:] if len(text) > 1 else text.upper()
-                translations.append(text)
+                translations.append(to_sentence_case(str(val).strip()))
         return "/ ".join(translations)
     
     all_care_inst_translated = []
