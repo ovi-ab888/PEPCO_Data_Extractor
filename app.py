@@ -55,9 +55,9 @@ def load_component_translations():
     if not care_data["component_names"].empty:
         return care_data["component_names"]
     return pd.DataFrame({
-        "EN": ["Main fabric", "Lining", "Pocket bag", "Trim", "Hood", "Collar", "Cuff"],
-        "AL": ["Pëlhurë kryesore", "Llastik", "Thes me xhepa", "Shkurtim", "Kapuç", "Jakë", "Manshetë"],
-        "BG": ["Основен плат", "Подплата", "Вътрешен джоб", "Подстригване", "Качулка", "Яка", "Маншет"]
+        "EN": ["Main fabric", "Lining", "Pocket bag", "Trim", "Hood", "Collar", "Cuff", "Rib"],
+        "AL": ["Pëlhurë kryesore", "Llastik", "Thes me xhepa", "Shkurtim", "Kapuç", "Jakë", "Manshetë", "Rib"],
+        "BG": ["Основен плат", "Подплата", "Вътрешен джоб", "Подстригване", "Качулка", "Яка", "Маншет", "Rib"]
     })
 
 
@@ -96,7 +96,7 @@ def process_pepco():
     if not comp_translations_df.empty:
         component_options = comp_translations_df["EN"].dropna().astype(str).tolist()
     if not component_options:
-        component_options = ["Main fabric", "Outer fabric", "Lining", "Pocket bag", "Collar", "Cuff"]
+        component_options = ["Main fabric", "Outer fabric", "Lining", "Pocket bag", "Collar", "Cuff", "Rib"]
     
     use_advanced_mode = st.toggle("🔧 Advanced Mode (Multiple Components)", value=False)
     
@@ -106,6 +106,7 @@ def process_pepco():
     if not st.session_state.composition_blocks:
         st.session_state.composition_blocks.append({
             "component_name": "Main fabric",
+            "component_name_optional": "",
             "materials": [{"mat": "", "pct": 0}]
         })
     
@@ -127,7 +128,7 @@ def process_pepco():
         return f"{pct}% {'/ '.join(translations)}"
     
     def get_component_name_translations(comp_name):
-        if comp_translations_df.empty:
+        if not comp_name or comp_translations_df.empty:
             return comp_name
         row = comp_translations_df[comp_translations_df['EN'].astype(str).str.strip() == comp_name]
         if row.empty:
@@ -160,6 +161,7 @@ def process_pepco():
             top1, top2 = st.columns([5, 1])
             with top1:
                 if use_advanced_mode:
+                    # Component Name (Required)
                     current_name = block.get("component_name", "Main fabric")
                     name_index = component_options.index(current_name) if current_name in component_options else 0
                     block["component_name"] = st.selectbox(
@@ -167,6 +169,17 @@ def process_pepco():
                         options=component_options,
                         index=name_index,
                         key=f"comp_name_{block_idx}"
+                    )
+                    
+                    # Optional Component Name
+                    optional_options = [""] + component_options
+                    current_optional = block.get("component_name_optional", "")
+                    optional_index = optional_options.index(current_optional) if current_optional in optional_options else 0
+                    block["component_name_optional"] = st.selectbox(
+                        f"Optional Component Name #{block_idx + 1} (optional)",
+                        options=optional_options,
+                        index=optional_index,
+                        key=f"comp_name_optional_{block_idx}"
                     )
                 else:
                     st.markdown("#### Simple Composition")
@@ -225,6 +238,7 @@ def process_pepco():
             if valid_materials and total_pct == 100:
                 components_data.append({
                     "name": block["component_name"],
+                    "name_optional": block.get("component_name_optional", ""),
                     "materials": valid_materials.copy()
                 })
     
@@ -233,20 +247,29 @@ def process_pepco():
             if st.button("➕ Add Component", key="add_component_btn"):
                 st.session_state.composition_blocks.append({
                     "component_name": "Main fabric",
+                    "component_name_optional": "",
                     "materials": [{"mat": "", "pct": 0}]
                 })
                 st.rerun()
         else:
             st.info("Maximum 5 components allowed")
     
+    # Build composition text
     composition_lines = []
     for comp in components_data:
         material_text = build_material_line(comp["materials"])
+        
         if use_advanced_mode:
-            comp_translated = get_component_name_translations(comp["name"])
-            line = f"{comp_translated}:\n\n{material_text}"
+            main_name = get_component_name_translations(comp["name"])
+            optional_name = get_component_name_translations(comp["name_optional"]) if comp.get("name_optional") else ""
+            
+            if optional_name:
+                line = f"{main_name} / {optional_name}:\n\n{material_text}"
+            else:
+                line = f"{main_name}:\n\n{material_text}"
         else:
             line = material_text
+        
         composition_lines.append(line)
     
     final_composition_text = "\n\n".join(composition_lines)
@@ -373,7 +396,6 @@ Uvoznik za Srbiju: Pepco d.o.o., Pariske komune 22, 11070 Beograd-Novi Beograd. 
 def main():
     st.title("PEPCO Care Label Generator")
     
-    # Reset button
     if st.button("🆕 Reset"):
         for k in list(st.session_state.keys()):
             if k.startswith(("ui_", "mat_", "comp_", "care_", "composition_")):
