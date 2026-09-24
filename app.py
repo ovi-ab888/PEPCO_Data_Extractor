@@ -267,7 +267,7 @@ def process_pepco():
             optional_name = get_component_name_translations(comp["name_optional"]) if comp.get("name_optional") else ""
             
             if optional_name:
-                line = f"{main_name} / {optional_name}:\n\n{material_text}"
+                line = f"{main_name}\n\n{optional_name}:\n\n{material_text}"
             else:
                 line = f"{main_name}:\n\n{material_text}"
         else:
