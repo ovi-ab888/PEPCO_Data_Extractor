@@ -38,6 +38,7 @@ from classification import (
 from translation import format_product_translations
 from price_helpers import parse_pln_price, apply_price_columns
 from material_ui import render_material_section
+from composition_care import render_composition_care_section
 from csv_export import render_editor_and_download
 
 
@@ -156,6 +157,11 @@ def process_pepco_pdf(uploaded_pdf, extra_order_ids: str | None = None):
     ) = render_material_section(material_translations_df)
 
     # ============================================================
+    #  COMPOSITION_CARE (composition_care.py)
+    # ============================================================
+    composition_care_text = render_composition_care_section()
+
+    # ============================================================
     #  DataFrame enrichment (Dept, Cotton, Collection, Product, Washing)
     # ============================================================
     df['Dept'] = df['Item_classification'].apply(get_dept_value)
@@ -181,6 +187,7 @@ def process_pepco_pdf(uploaded_pdf, extra_order_ids: str | None = None):
         df['product_name'] = ""
 
     df['washing_code'] = WASHING_CODES[washing_code_key]
+    df['Composition_Care'] = composition_care_text
 
     # ============================================================
     #  PRICE LADDER + CSV EXPORT
@@ -214,7 +221,7 @@ def pepco_section():
             # Clear only app-related session keys
             for k in list(st.session_state.keys()):
                 if k.startswith((
-                    "ui_", "mat_", "pepco_",
+                    "ui_", "mat_", "pepco_", "cc_",
                     "colour_", "colour_manual_", "colour_missing_"
                 )):
                     st.session_state.pop(k, None)
