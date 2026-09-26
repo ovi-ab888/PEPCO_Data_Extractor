@@ -22,7 +22,8 @@ FINAL_COLS = [
     "Cotton",  # 100% Cotton hole "Z", na hole khali (column shob somoy thake)
     # ---- Sticker columns (sticker_extractor.py) ----
     "Pictogram", "Promotional", "Product_name_st", "Inner_kg", "Season_st",
-    "Inner_qty", "Outer_qty", "TC_Number_st", "Barcode_st"
+    "Inner_qty", "Outer_qty", "TC_Number_st", "Barcode_st",
+    "Composition_Care"  # composition_care.py
 ]
 
 
