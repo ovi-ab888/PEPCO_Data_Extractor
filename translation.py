@@ -6,16 +6,20 @@
 # ================================================================
 import pandas as pd
 
+from composition_care import build_language_composition
+
 
 # ================================================================
 #  TRANSLATION FORMATTER (AL, ES, MK, etc)
+#  composition_ctx: composition_care.render_composition_care_section()
+#  er return-kora dict (components_data, materials_df,
+#  comp_translations_df, use_advanced_mode) — AL/MK-er composition ei
+#  ek-i data theke ashe, Composition_Care column-er shathe same thake.
 # ================================================================
 def format_product_translations(
     product_name,
     translation_row,
-    selected_materials=None,
-    material_translations=None,
-    material_compositions=None
+    composition_ctx=None,
 ):
     """Builds multilingual product description with material info."""
     formatted = []
@@ -48,6 +52,8 @@ def format_product_translations(
         'SI', 'SK', 'UA'
     ]
 
+    components_data = composition_ctx["components_data"] if composition_ctx else []
+
     # Build translations
     for lang in language_order:
         if lang in combined_lang and combined_lang[lang] is not None:
@@ -55,15 +61,17 @@ def format_product_translations(
         else:
             text = translation_row.get(lang, product_name)
 
-        # Material names or composition for AL + MK only
-        if selected_materials and material_translations and lang in ['AL', 'MK']:
-            comp = (material_compositions or {}).get(lang, "")
-            names = material_translations.get(lang, "")
-
-            if comp:
-                text = f"{text}: {comp}"
-            elif names:
-                text = f"{text}: {names}"
+        # Composition for AL + MK only — composition_care.py-r data theke
+        if components_data and lang in ['AL', 'MK']:
+            comp_text = build_language_composition(
+                components_data,
+                composition_ctx["materials_df"],
+                composition_ctx["comp_translations_df"],
+                lang,
+                composition_ctx["use_advanced_mode"],
+            )
+            if comp_text:
+                text = f"{text}: {comp_text}"
 
         # Country suffix
         if lang in country_suffixes:
