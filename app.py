@@ -9,7 +9,8 @@
 #     classification.py  classification / collection helper
 #     translation.py     multi-language product name
 #     price_helpers.py   PLN parse + price ladder
-#     material_ui.py     Material Composition UI
+#     composition_care.py  Material Composition + Care label UI (product_name
+#                           AL/MK ar Composition_Care ek-i data theke ashe)
 #     csv_export.py      editable table + CSV download
 # ================================================================
 
@@ -29,7 +30,7 @@ import pandas as pd
 from constants import WASHING_CODES
 from pdf_extractor import extract_data_from_pdf, extract_order_id_only
 from auto_fields import get_dept_value, clean_item_name_english
-from data_loaders import load_product_translations, load_material_translations
+from data_loaders import load_product_translations
 from classification import (
     map_item_class_to_dept_label,
     modify_collection,
@@ -37,7 +38,6 @@ from classification import (
 )
 from translation import format_product_translations
 from price_helpers import parse_pln_price, apply_price_columns
-from material_ui import render_material_section
 from composition_care import render_composition_care_section
 from csv_export import render_editor_and_download
 
@@ -49,7 +49,6 @@ def process_pepco_pdf(uploaded_pdf, extra_order_ids: str | None = None):
     """Main pipeline: parse PDF, build DF, apply UI choices, export CSV."""
     # ----- Load reference data -----
     translations_df = load_product_translations()
-    material_translations_df = load_material_translations()
 
     if not (uploaded_pdf and not translations_df.empty):
         return
@@ -147,19 +146,11 @@ def process_pepco_pdf(uploaded_pdf, extra_order_ids: str | None = None):
     pln_price = parse_pln_price(pln_price_raw)
 
     # ============================================================
-    #  MATERIAL COMPOSITION UI  (material_ui.py)
+    #  MATERIAL COMPOSITION + CARE LABEL  (composition_care.py)
+    #  Ekta-i UI: Composition_Care ar product_name (AL/MK)-er
+    #  composition duitai ei ek-i data theke ashe — double input lage na.
     # ============================================================
-    (
-        selected_materials,
-        cotton_value,
-        material_trans_dict,
-        material_compositions,
-    ) = render_material_section(material_translations_df)
-
-    # ============================================================
-    #  COMPOSITION_CARE (composition_care.py)
-    # ============================================================
-    composition_care_text = render_composition_care_section()
+    composition_ctx = render_composition_care_section()
 
     # ============================================================
     #  DataFrame enrichment (Dept, Cotton, Collection, Product, Washing)
@@ -167,7 +158,7 @@ def process_pepco_pdf(uploaded_pdf, extra_order_ids: str | None = None):
     df['Dept'] = df['Item_classification'].apply(get_dept_value)
 
     # Cotton column shob somoy thakbe: 100% Cotton hole "Z", na hole khali
-    df['Cotton'] = cotton_value
+    df['Cotton'] = composition_ctx["cotton_value"]
 
     df['Collection'] = df.apply(
         lambda r: modify_collection(r['Collection'], r['Item_classification']),
@@ -179,15 +170,13 @@ def process_pepco_pdf(uploaded_pdf, extra_order_ids: str | None = None):
         df['product_name'] = format_product_translations(
             product_type,
             product_row.iloc[0],
-            selected_materials,
-            material_trans_dict,
-            material_compositions
+            composition_ctx,
         )
     else:
         df['product_name'] = ""
 
     df['washing_code'] = WASHING_CODES[washing_code_key]
-    df['Composition_Care'] = composition_care_text
+    df['Composition_Care'] = composition_ctx["composition_care_text"]
 
     # ============================================================
     #  PRICE LADDER + CSV EXPORT
