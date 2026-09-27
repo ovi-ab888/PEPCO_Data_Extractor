@@ -352,4 +352,107 @@ def render_composition_care_section():
     else:
         combined_care = f"{SHRINKAGE_LINE}\n\n\n\n\n\n\n\n\n\n{BANGLADESH_LINE}"
 
-    return combined_care
+    # ---------- Cotton flag (CSV "Cotton" column) ----------
+    # Shudhu ekta component ar tar bhitore ekta-i material thakle, ar sheta
+    # 100% Cotton hole "Z" — na hole khali. (Simple Mode-e ei-i case.)
+    cotton_value = get_cotton_value(components_data)
+
+    # ---------- product_name (AL/MK)-er jonno context return kora ----------
+    # Eta translation.py-er format_product_translations()-ke pathano hoy,
+    # jate product_name-er composition ar ei Composition_Care-er composition
+    # EK-I data theke ashe (double input lage na).
+    return {
+        "composition_care_text": combined_care,
+        "cotton_value": cotton_value,
+        "components_data": components_data,
+        "materials_df": materials_df,
+        "comp_translations_df": comp_translations_df,
+        "use_advanced_mode": use_advanced_mode,
+    }
+
+
+# ================================================================
+#  Ekta component-er Cotton flag ber kora
+#  Shudhu 1-ta component + shei component-e 1-ta-i material (100% Cotton)
+#  hole "Z", na hole khali.
+# ================================================================
+def get_cotton_value(components_data):
+    if len(components_data) == 1 and len(components_data[0]["materials"]) == 1:
+        m = components_data[0]["materials"][0]
+        mat_name = (m.get("mat") or "").strip().lower()
+        try:
+            pct = int(m.get("pct") or 0)
+        except (TypeError, ValueError):
+            pct = 0
+        if mat_name == "cotton" and pct == 100:
+            return "Z"
+    return ""
+
+
+# ================================================================
+#  Ekta material-er naam EKTA nirdishto language-e (jemon shudhu "AL")
+# ================================================================
+def _material_name_in_language(mat_name, materials_df, lang):
+    if not mat_name:
+        return ""
+    if materials_df.empty:
+        return to_sentence_case(mat_name)
+
+    en_col = materials_df.columns[0]
+    row = materials_df[materials_df[en_col].astype(str).str.strip() == mat_name]
+    if row.empty or lang not in materials_df.columns:
+        return to_sentence_case(mat_name)
+
+    val = row.iloc[0].get(lang, "")
+    if pd.notna(val) and str(val).strip():
+        return to_sentence_case(str(val).strip())
+    return to_sentence_case(mat_name)
+
+
+# ================================================================
+#  Ekta component-er naam EKTA nirdishto language-e (jemon shudhu "AL")
+# ================================================================
+def _component_name_in_language(comp_name, comp_translations_df, lang):
+    if not comp_name:
+        return ""
+    if comp_translations_df.empty or lang not in comp_translations_df.columns:
+        return to_sentence_case(comp_name)
+
+    row = comp_translations_df[comp_translations_df['EN'].astype(str).str.strip() == comp_name]
+    if row.empty:
+        return to_sentence_case(comp_name)
+
+    val = row.iloc[0].get(lang, "")
+    if pd.notna(val) and str(val).strip():
+        return to_sentence_case(str(val).strip())
+    return to_sentence_case(comp_name)
+
+
+# ================================================================
+#  product_name (AL/MK)-er jonno composition text banano — EK-I
+#  components_data theke, jeta Composition_Care o use kore.
+#
+#  Simple Mode: "100% Pambuk" (component name chara)
+#  Advanced Mode, ekta component: "Pëlhurë kryesore 100% Pambuk"
+#  Advanced Mode, multi component:
+#     "Pëlhurë kryesore 100% Pambuk: Llastik 95% Pambuk, 5% Elasten"
+#
+#  app.py/translation.py te use korte:
+#      from composition_care import build_language_composition
+# ================================================================
+def build_language_composition(components_data, materials_df, comp_translations_df, lang, use_advanced_mode):
+    parts = []
+    for comp in components_data:
+        mat_parts = [
+            f"{m['pct']}% {_material_name_in_language(m['mat'], materials_df, lang)}"
+            for m in comp["materials"]
+        ]
+        materials_str = ", ".join(mat_parts)
+
+        if use_advanced_mode:
+            comp_name = _component_name_in_language(comp["name"], comp_translations_df, lang)
+            parts.append(f"{comp_name} {materials_str}" if comp_name else materials_str)
+        else:
+            parts.append(materials_str)
+
+    return ": ".join(parts)
